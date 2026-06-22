@@ -5,11 +5,19 @@ export const ENTRY_COST_PCT = 0.00505;
 export const EXIT_COST_PCT = 0.00505;
 export const FULL_COST_PCT = ENTRY_COST_PCT + EXIT_COST_PCT;
 
+// Handles two possible formats coming from Excel:
+// - plain text cells: "15/02/2026"
+// - native Excel date cells: "2026-02-15 0:00:00"
 export function parseBrDate(dateText: string): Date {
-  const parts = dateText.split("/");
-  const day = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10);
-  const year = parseInt(parts[2], 10);
+  const trimmed = dateText.trim();
+
+  if (trimmed.includes("-")) {
+    const [datePart] = trimmed.split(" ");
+    const [year, month, day] = datePart.split("-").map((p) => parseInt(p, 10));
+    return new Date(year, month - 1, day);
+  }
+
+  const [day, month, year] = trimmed.split("/").map((p) => parseInt(p, 10));
   return new Date(year, month - 1, day);
 }
 
@@ -23,16 +31,19 @@ export function calculateOperation(
   op: RawOperation,
   calculationMonth: Date
 ): CalculatedOperation {
+  const entryNotional = op.quantity * op.entryPrice;
+
   if (!op.barrierBreached) {
     // Coupon received: asset is sold, full cost applies (entry + exit).
-    // Allocated to the fixing month, since that's when the position settled.
+    // Allocated to the fixing month (position settled).
     const grossResultPct = op.grossCoupon / 100;
     const netResultPct = grossResultPct - FULL_COST_PCT;
-    const financialResult = op.notional * netResultPct;
+    const financialResult = entryNotional * netResultPct;
     const fixingDate = parseBrDate(op.fixingDate);
 
     return {
       ...op,
+      notional: entryNotional,
       status: "Coupon Received",
       grossResultPct,
       netResultPct,
@@ -42,13 +53,15 @@ export function calculateOperation(
     };
   } else {
     // Holding asset: position not settled yet, only entry cost applies.
-    // Allocated to the calculation month, since it's marked to market each upload.
-    const grossResultPct = op.currentPrice / op.entryPrice - 1;
+    // Result is based on the real share count.
+    const currentValue = op.quantity * op.currentPrice;
+    const grossResultPct = currentValue / entryNotional - 1;
     const netResultPct = grossResultPct - ENTRY_COST_PCT;
-    const financialResult = op.notional * netResultPct;
+    const financialResult = currentValue - entryNotional - entryNotional * ENTRY_COST_PCT;
 
     return {
       ...op,
+      notional: entryNotional,
       status: "Holding Asset",
       grossResultPct,
       netResultPct,

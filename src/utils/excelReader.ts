@@ -34,7 +34,7 @@ export function readOperationsFromExcel(file: File): Promise<RawOperation[]> {
           fixingDate: String(row["Fixing Date"] ?? "").trim(),
           entryPrice: toNumber(row["Entry Price"]),
           currentPrice: toNumber(row["Current Price"]),
-          notional: toNumber(row["Notional"]),
+          quantity: toNumber(row["Quantity"]),
           grossCoupon: toNumber(row["Gross Coupon (%)"]),
           downBarrier: toNumber(row["Down Barrier (%)"]),
           barrierBreached: toBoolean(row["Barrier Breached"]),
