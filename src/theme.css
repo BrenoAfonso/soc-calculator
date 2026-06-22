@@ -1,0 +1,26 @@
+
+:root {
+  --sacre-green-dark: #1b4747;
+  --sacre-green: #2a6e6e;
+  --sacre-green-light: #5a9b9b;
+  --sacre-green-bg: #eaf3f3;
+  --sacre-text-gray: #2c2c2a;
+  --sacre-light-gray: #6b6b68;
+  --sacre-white: #ffffff;
+  --sacre-red: #c0392b;
+  --sacre-red-bg: #fdecea;
+  --sacre-border: #d6e6e6;
+
+  --font-base: 'Segoe UI', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-base);
+  background-color: var(--sacre-green-bg);
+  color: var(--sacre-text-gray);
+}
